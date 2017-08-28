@@ -23,6 +23,4 @@ branches:
     - code  #只监测源码分支，是我的分支的名称，可根据自己情况设置
 env:
  global:
-   - GH_REF: github.com:luohuaruxue/luohuaruxue.github.io.git  #设置GH_REF，注意更改yourname
-
- 
+   - GH_REF: github.com/luohuaruxue/luohuaruxue.github.io.git  #设置GH_REF，注意更改yourname
