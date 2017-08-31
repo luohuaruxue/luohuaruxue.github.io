@@ -10,11 +10,9 @@ show processlist;
 一看，果然是发生了死锁
 死锁语句如下
 
-<!--more-->
-
 ```sql
-update exampleTable set example_row1="0" where id='123' & createTime='2016-02-01 00:00:00'
-update exampleTable set example_row2="0" where id='123'
+update exampleTable set example_row1="0" where id="123" and createTime="2016-02-01 00:00:00"
+update exampleTable set example_row2="0" where id="123"
 ```
 * 表结构为 id 和 createTime 为是复合主键，而createTime作为分区主键，整个表使用分区存储
 
@@ -33,15 +31,15 @@ update exampleTable set example_row2="0" where id='123'
 
 令人费解的是，两个update语句，怎么会造成死锁呢。本着我遇到的坑肯定有人已然跳进过的心态，于是查找资料，果不其然：
 
-> ![Alt text](http://pic.yupoo.com/hedengcheng/DnJ6S9J0/medish.jpg)
+ ![Alt text](http://pic.yupoo.com/hedengcheng/DnJ6S9J0/medish.jpg)
 > 
 第二个用例，虽然每个Session都只有一条语句，仍旧会产生死锁。要分析这个死锁，首先必须用到本文前面提到的MySQL加锁的规则。针对Session 1，从name索引出发，读到的[hdc, 1]，[hdc, 6]均满足条件，不仅会加name索引上的记录X锁，而且会加聚簇索引上的记录X锁，加锁顺序为先[1,hdc,100]，后[6,hdc,10]。而Session 2，从pubtime索引出发，[10,6],[100,1]均满足过滤条件，同样也会加聚簇索引上的记录X锁，加锁顺序为[6,hdc,10]，后[1,hdc,100]。发现没有，跟Session 1的加锁顺序正好相反，如果两个Session恰好都持有了第一把锁，请求加第二把锁，死锁就发生了。
  > -- [何登成的技术博客-MySQL 加锁处理分析](http://hedengcheng.com/?p=771)
 
 根据上述分析，我们可以知道上面所说的两个SQL语句，语句1，先获得了索引createTime的锁，再去获取索引id的锁的时候，已然被语句2持有了。于是更新同一条记录的两个SQL语句发生了死锁。
 ```sql
-update exampleTable set example_row1="0" where id='123' & createTime='2016-02-01 00:00:00'
-update exampleTable set example_row2="0" where id='123'
+update exampleTable set example_row1="0" where id="123"  and createTime="2016-02-01 00:00:00"
+update exampleTable set example_row2="0" where id="123"
 ```
 然而当在测试环境的数据库中explain执行造成死锁的两个语句的时候，输出均为:
 
