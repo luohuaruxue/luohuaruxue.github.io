@@ -1,0 +1,427 @@
+
+
+
+
+
+
+
+<!doctype html>
+<html lang="">
+<head>
+  <meta http-equiv="Content-Type" content="text/html" charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+  <meta name="author" content="luohuaruxue">
+  
+  
+  
+  
+    <meta name="description" content="线上服务器告警，使用VPN远程登录数据库，查看当前有哪些线程在运行
+1show processlist;
+一看，果然是发生了死锁死锁语句如下
+12update table set example_row1="0" where id="123" and createTime="2016-02-01 00:00:00"update table set example_row2="0" where...">
+  
+  <title>MySQL 死锁怎么办 [ 况属高风晚，山山黄叶飞。 ]</title>
+  
+  
+    <link rel="shortcut icon" href="/favicon.ico">
+  
+  
+  <link rel="stylesheet" href="/css/random.css">
+<link rel="stylesheet" href="/css/vegas.min.css">
+<link rel="stylesheet" href="/css/highlight-railscasts.css">
+<link rel="stylesheet" href="/css/jquery.fancybox.css">
+<link rel="stylesheet" href="/css/iconfont/iconfont.css">
+<link rel="stylesheet" href="/css/jquery.fancybox-thumbs.css">
+<link rel="stylesheet" href="/css/plyr.css">
+  
+</head>
+
+<body>
+<div class="side-navigate hide-area">
+  
+    <div class="item prev">
+      <a href="/2016/03/03/about-gitcafe-close/">
+        <div class="item-icon"></div>
+      </a>
+      <div class="item-title">
+        GitCafe 被收购有感
+      </div>
+    </div>
+  
+  
+    <div class="item next">
+      <a href="/2015/11/03/linux-no-free-space/">
+        <div class="item-icon"></div>
+      </a>
+      <div class="item-title">
+        Linux 磁盘无剩余空间怎么办
+      </div>
+    </div>
+  
+</div>
+<div id="outer-container" class="hide-area">
+<div id="container">
+  <div id="menu-outer" class="slide-down">
+    <div id="menu-inner">
+      <div id="brand">
+        
+        <a onClick="openUserCard()">
+          <img id="avatar" src="http://tva4.sinaimg.cn/crop.0.0.180.180.180/7317a86ajw1e8qgp5bmzyj2050050aa8.jpg"/>
+          <div id="homelink">况属高风晚，山山黄叶飞。</div>
+        </a>
+      </div>
+      <div id="menu-list">
+        <ul>
+        
+        
+          
+            <li>
+          
+            <a href="/index.html">Home</a>
+            
+          </li>
+        
+          
+            <li>
+          
+            <a href="/archives">Archives</a>
+            
+          </li>
+        
+          
+            <li>
+          
+            <a href="https://github.com/luohuaruxue">Github</a>
+            
+          </li>
+        
+        </ul>
+      </div>
+      <div id="show-menu">
+        <button>Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="content-outer">
+    <div id="content-inner">
+      
+      
+  <article id="post">
+    <h1>MySQL 死锁怎么办</h1>
+    <p class="page-title-sub">
+      <span id = "post-title-date">Created at 2016-02-27</span>
+      
+        <span id = "post-title-updated">Updated at 2017-09-01</span>
+      
+      
+      
+    </p>
+    
+    <p>线上服务器告警，使用VPN远程登录数据库，查看当前有哪些线程在运行</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">show</span> <span class="keyword">processlist</span>;</div></pre></td></tr></table></figure>
+<p>一看，果然是发生了死锁<br>死锁语句如下</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">update</span> <span class="keyword">table</span> <span class="keyword">set</span> example_row1=<span class="string">"0"</span> <span class="keyword">where</span> <span class="keyword">id</span>=<span class="string">"123"</span> <span class="keyword">and</span> createTime=<span class="string">"2016-02-01 00:00:00"</span></div><div class="line"><span class="keyword">update</span> <span class="keyword">table</span> <span class="keyword">set</span> example_row2=<span class="string">"0"</span> <span class="keyword">where</span> <span class="keyword">id</span>=<span class="string">"123"</span></div></pre></td></tr></table></figure>
+<ul>
+<li>表结构为 id 和 createTime 为是复合主键，而createTime作为分区主键，整个表使用分区存储</li>
+</ul>
+<p>这不禁让人费解，为什么更新同一条记录的不同属性(且属性并非为主键)，会导致出现死锁。并且查询条件中，应该均用到索引，且先获取到id这个字段的语句先执行，应该不满足出现死锁的四个必要条件。</p>
+<p>依次 explain  一下上面两个SQL语句：</p>
+<table>
+<thead>
+<tr>
+<th>selectType</th>
+<th style="text-align:right">table</th>
+<th style="text-align:center">type</th>
+<th>key</th>
+<th>keyLen</th>
+<th>ref</th>
+<th>rows</th>
+<th>Extra</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SIMPLE</td>
+<td style="text-align:right">table</td>
+<td style="text-align:center">index_merge</td>
+<td>createTime,id</td>
+<td>6182</td>
+<td>NULL</td>
+<td>1</td>
+<td>Using intersect createTime_index,id_index ,Using where,Using temporary</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>selectType</th>
+<th style="text-align:right">table</th>
+<th style="text-align:center">type</th>
+<th>possibleKeys</th>
+<th>key</th>
+<th>keyLen</th>
+<th>ref</th>
+<th>rows</th>
+<th>Extra</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SIMPLE</td>
+<td style="text-align:right">table</td>
+<td style="text-align:center">range</td>
+<td>PRIMARY,id</td>
+<td>PRIMARY</td>
+<td>182</td>
+<td>const</td>
+<td>1</td>
+<td>Using where,Using temporary</td>
+</tr>
+</tbody>
+</table>
+<p>令人费解的是，两个update语句，怎么会造成死锁呢。本着我遇到的坑肯定有人已然跳进过的心态，于是查找资料，果不其然：</p>
+<p><img src="http://pic.yupoo.com/hedengcheng/DnJ6S9J0/medish.jpg" alt="Alt text"></p>
+<blockquote>
+<p>第二个用例，虽然每个Session都只有一条语句，仍旧会产生死锁。要分析这个死锁，首先必须用到本文前面提到的MySQL加锁的规则。针对Session 1，从name索引出发，读到的[hdc, 1]，[hdc, 6]均满足条件，不仅会加name索引上的记录X锁，而且会加聚簇索引上的记录X锁，加锁顺序为先[1,hdc,100]，后[6,hdc,10]。而Session 2，从pubtime索引出发，[10,6],[100,1]均满足过滤条件，同样也会加聚簇索引上的记录X锁，加锁顺序为[6,hdc,10]，后[1,hdc,100]。发现没有，跟Session 1的加锁顺序正好相反，如果两个Session恰好都持有了第一把锁，请求加第二把锁，死锁就发生了。</p>
+<p>– <a href="http://hedengcheng.com/?p=771" target="_blank" rel="external">何登成的技术博客-MySQL 加锁处理分析</a></p>
+</blockquote>
+<p>根据上述分析，我们可以知道上面所说的两个SQL语句，语句1，先获得了索引createTime的锁，再去获取索引id的锁的时候，已然被语句2持有了。于是更新同一条记录的两个SQL语句发生了死锁。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">update</span> <span class="keyword">table</span> <span class="keyword">set</span> example_row1=<span class="string">"0"</span> <span class="keyword">where</span> <span class="keyword">id</span>=<span class="string">"123"</span>  <span class="keyword">and</span> createTime=<span class="string">"2016-02-01 00:00:00"</span></div><div class="line"><span class="keyword">update</span> <span class="keyword">table</span> <span class="keyword">set</span> example_row2=<span class="string">"0"</span> <span class="keyword">where</span> <span class="keyword">id</span>=<span class="string">"123"</span></div></pre></td></tr></table></figure>
+<p>然而当在测试环境的数据库中explain执行造成死锁的两个语句的时候，输出均为:</p>
+<table>
+<thead>
+<tr>
+<th>selectType</th>
+<th style="text-align:right">table</th>
+<th style="text-align:center">type</th>
+<th>possibleKeys</th>
+<th>key</th>
+<th>keyLen</th>
+<th>ref</th>
+<th>rows</th>
+<th>Extra</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SIMPLE</td>
+<td style="text-align:right">table</td>
+<td style="text-align:center">range</td>
+<td>PRIMARY,id</td>
+<td>PRIMARY</td>
+<td>182</td>
+<td>const</td>
+<td>1</td>
+<td>Using where,Using temporary</td>
+</tr>
+</tbody>
+</table>
+<p>这不禁让人觉得诧异，在其他因素均相同的情况下，为什么又不使用到 createTime 的字段索引了呢。<br>想了想，统计线上和测试环境的同一张表的记录数：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">select</span> <span class="keyword">count</span>(<span class="number">1</span>) <span class="keyword">from</span> <span class="keyword">table</span>;</div></pre></td></tr></table></figure>
+<p>发现线上的数据库表将近千万，而测试环境的数据库只有几十万，数量上差了两个数量级。那么为什么数量的差别会导致没有用到 createTime 这个主键索引呢。<br>在文章开头的时候有说过：</p>
+<blockquote>
+<p>表结构为 id 和 createTime 为是复合主键，而createTime作为分区主键，整个表使用分区存储。</p>
+</blockquote>
+<p>因此可以得出推论，Mysql 在更新分区存储表的记录时，如果 where 同时含有 id 和 createTime 的查询条件，会根据分区主键 createTime 先找到记录所在的硬盘分区，再通过 id 找到唯一的那条记录进行更新，使用到聚簇索引。而如果表记录数量少、只存储在同一个分区里，则只使用到主键 id 。</p>
+
+  </article>
+  <div class="random-toc-area">
+  <button class="btn-hide-toc btn-hide-toc-show" style="display: none" onclick="TOCToggle()">Show TOC</button>
+  <button class="btn-hide-toc btn-hide-toc-hide" onclick="TOCToggle()">Hide TOC</button>
+  <div class="random-toc">
+    <h2>Table of Content</h2>
+    
+  </div>
+</div>
+
+  
+<nav id="pagination">
+  
+    <a href="/2016/03/03/about-gitcafe-close/" class="prev">&larr; Prev post GitCafe 被收购有感</a>
+  
+
+  
+
+  
+    <a href="/2015/11/03/linux-no-free-space/" class="next">Next post Linux 磁盘无剩余空间怎么办 &rarr;</a>
+  
+</nav>
+
+  <!-- JiaThis Button BEGIN -->
+
+<!-- JiaThis Button END -->
+
+
+      
+      
+    </div>
+  </div>
+
+  <div id="bottom-outer">
+    <div id="bottom-inner">
+      Site by luohuaruxue using
+      <a href="http://hexo.io">Hexo</a> & <a href="https://github.com/stiekel/hexo-theme-random">Random</a>
+      <br>
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+
+<div id="user-card">
+  <div class="center-field">
+    <img class="avatar" src="http://tva4.sinaimg.cn/crop.0.0.180.180.180/7317a86ajw1e8qgp5bmzyj2050050aa8.jpg">
+    <p id="description"></p>
+    <ul class="social-icon">
+  
+  
+    <li>
+      <a href="https://github.com/luohuaruxue">
+        
+          <i class="icon iconfont github">&#xe606;</i>
+        
+      </a>
+    </li>
+  
+    <li>
+      <a href="https://coding.net/u/stop">
+        
+          <i class="icon iconfont coding">&#xe607;</i>
+        
+      </a>
+    </li>
+  
+    <li>
+      <a href="https://weibo.com/luohuaruxue">
+        
+          <i class="icon iconfont weibo">&#xe602;</i>
+        
+      </a>
+    </li>
+  
+    <li>
+      <a href="https://www.douban.com/luohuaruxue">
+        
+          <i class="icon iconfont douban">&#xe60f;</i>
+        
+      </a>
+    </li>
+  
+</ul>
+  </div>
+</div>
+
+
+<div id="btn-view">Hide</div>
+
+<script>
+// is trigger analytics / tongji script
+var isIgnoreHost = false;
+
+if(window && window.location && window.location.host) {
+  isIgnoreHost = ["localhost","127.0.0.1"].some(function(address){
+    return 0 === window.location.host.indexOf(address);
+  });
+}
+
+var isTriggerAnalytics = !( true && isIgnoreHost );
+
+</script>
+
+
+
+
+  
+  
+    <script src="/js/jquery-2.2.3.min.js"></script>
+  
+    <script src="/js/vegas.min.js"></script>
+  
+    <script src="/js/random.js"></script>
+  
+    <script src="/js/highlight.pack.js"></script>
+  
+    <script src="/js/jquery.mousewheel.pack.js"></script>
+  
+    <script src="/js/jquery.fancybox.pack.js"></script>
+  
+    <script src="/js/jquery.fancybox-thumbs.js"></script>
+  
+    <script src="/js/plyr.js"></script>
+  
+
+<script>
+
+  // fancybox
+  var backgroundImages = [];
+  
+  $('#post').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox') || $(this).parent().hasClass('fancybox-thumb')) return;
+      var alt = this.alt || this.title;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'post' + i);
+    });
+  });
+  $(".fancybox").fancybox();
+
+var vegasConfig = {"preload­Image":true,"transition":["slideLeft2","slideRight2","flash2"],"timer":true,"delay":5000,"shuffle":true,"count":28};
+var unsplashConfig = {"gravity":"south"};
+// is show background images
+var turnoffBackgroundImage = false;
+
+
+
+  turnoffBackgroundImage = true;
+
+
+var backgroundColor = "34495E";
+
+$(".fancybox-thumb").fancybox({
+  prevEffect: 'none',
+  nextEffect: 'none',
+  helpers: {
+    title: {
+      type: 'outside'
+    },
+    thumbs: {
+      width: 50,
+      height: 50
+    }
+  }
+});
+
+// show video with plyr
+$(".video-container iframe").each(function(i){
+  var url = $(this).attr('src');
+  var id = url.split('/').pop();
+  var plyrContainer = document.createElement('div');
+  plyrContainer.className = 'plyr';
+  var plyrElement = document.createElement('div');
+  plyrElement.dataset.videoId = id;
+  switch(true) {
+    case url.search('youtube.com') >= 0:
+      plyrElement.dataset.type = 'youtube';
+      break;
+    case url.search('vimeo.com') >= 0:
+      plyrElement.dataset.type = 'vimeo';
+      break;
+    default:
+      return;
+  };
+  plyrContainer.appendChild(plyrElement);
+  $(this).parent().html(plyrContainer);
+});
+plyr.setup('.plyr', {iconUrl: '/css/sprite.svg'});
+</script>
+</body>
+</html>
+

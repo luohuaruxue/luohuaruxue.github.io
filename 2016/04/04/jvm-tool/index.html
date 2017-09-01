@@ -1,0 +1,360 @@
+
+
+
+
+
+
+
+<!doctype html>
+<html lang="">
+<head>
+  <meta http-equiv="Content-Type" content="text/html" charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+  <meta name="author" content="luohuaruxue">
+  
+  
+  
+  
+    <meta name="description" content="查看 Jvm  当前状态
+查看 tomcat pid
+12ps -ef |grep tomcat/JAVA_HOME/bin/jps
+
+查看当前内存情况
+1jstat -gcutil pid &gt;
+
+导出线程
+1jstack pid &gt;
+
+输出概要信息
+1jmap -heap pid &gt;
+
+导出 heap
+1jmap -dump:live,format=b,file=heap...">
+  
+  <title>JVM 命令脚本 [ 况属高风晚，山山黄叶飞。 ]</title>
+  
+  
+    <link rel="shortcut icon" href="/favicon.ico">
+  
+  
+  <link rel="stylesheet" href="/css/random.css">
+<link rel="stylesheet" href="/css/vegas.min.css">
+<link rel="stylesheet" href="/css/highlight-railscasts.css">
+<link rel="stylesheet" href="/css/jquery.fancybox.css">
+<link rel="stylesheet" href="/css/iconfont/iconfont.css">
+<link rel="stylesheet" href="/css/jquery.fancybox-thumbs.css">
+<link rel="stylesheet" href="/css/plyr.css">
+  
+</head>
+
+<body>
+<div class="side-navigate hide-area">
+  
+    <div class="item prev">
+      <a href="/2016/04/05/out-of-memory/">
+        <div class="item-icon"></div>
+      </a>
+      <div class="item-title">
+        OutOfMemory 怎么办
+      </div>
+    </div>
+  
+  
+    <div class="item next">
+      <a href="/2016/03/07/daily-soft/">
+        <div class="item-icon"></div>
+      </a>
+      <div class="item-title">
+        Windows 效率软件
+      </div>
+    </div>
+  
+</div>
+<div id="outer-container" class="hide-area">
+<div id="container">
+  <div id="menu-outer" class="slide-down">
+    <div id="menu-inner">
+      <div id="brand">
+        
+        <a onClick="openUserCard()">
+          <img id="avatar" src="http://tva4.sinaimg.cn/crop.0.0.180.180.180/7317a86ajw1e8qgp5bmzyj2050050aa8.jpg"/>
+          <div id="homelink">况属高风晚，山山黄叶飞。</div>
+        </a>
+      </div>
+      <div id="menu-list">
+        <ul>
+        
+        
+          
+            <li>
+          
+            <a href="/index.html">Home</a>
+            
+          </li>
+        
+          
+            <li>
+          
+            <a href="/archives">Archives</a>
+            
+          </li>
+        
+          
+            <li>
+          
+            <a href="https://github.com/luohuaruxue">Github</a>
+            
+          </li>
+        
+        </ul>
+      </div>
+      <div id="show-menu">
+        <button>Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="content-outer">
+    <div id="content-inner">
+      
+      
+  <article id="post">
+    <h1>JVM 命令脚本</h1>
+    <p class="page-title-sub">
+      <span id = "post-title-date">Created at 2016-04-04</span>
+      
+        <span id = "post-title-updated">Updated at 2017-09-01</span>
+      
+      
+      
+    </p>
+    
+    <h3 id="查看-Jvm-当前状态"><a href="#查看-Jvm-当前状态" class="headerlink" title="查看 Jvm  当前状态"></a>查看 Jvm  当前状态</h3><ul>
+<li><p>查看 tomcat pid</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">ps -ef |grep tomcat</div><div class="line">/JAVA_HOME/bin/jps</div></pre></td></tr></table></figure>
+</li>
+<li><p>查看当前内存情况</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">jstat -gcutil pid &gt;</div></pre></td></tr></table></figure>
+</li>
+<li><p>导出线程</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">jstack pid &gt;</div></pre></td></tr></table></figure>
+</li>
+<li><p>输出概要信息</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">jmap -heap pid &gt;</div></pre></td></tr></table></figure>
+</li>
+<li><p>导出 heap</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">jmap -dump:live,format=b,file=heap.bin <span class="variable">$1</span></div></pre></td></tr></table></figure>
+</li>
+</ul>
+<h3 id="脚本"><a href="#脚本" class="headerlink" title="脚本"></a>脚本</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">echo</span> <span class="string">'tomcat process:'</span><span class="variable">$1</span></div><div class="line">dirname=`date <span class="string">'+%Y%m%d%T'</span>`</div><div class="line">mkdir <span class="variable">$dirname</span></div><div class="line">chmod 777 <span class="variable">$dirname</span></div><div class="line"><span class="built_in">echo</span> <span class="string">'make directory:'</span><span class="variable">$dirname</span></div><div class="line"><span class="built_in">echo</span> <span class="string">'begin dump stack log..,log:'</span><span class="variable">$dirname</span><span class="string">'/stack.log'</span></div><div class="line">jstack <span class="variable">$1</span> &gt;<span class="variable">$dirname</span><span class="string">'/stack.log'</span></div><div class="line"><span class="built_in">echo</span> <span class="string">'begin dump stack log..,log:'</span><span class="variable">$dirname</span><span class="string">'/heap.log'</span></div><div class="line">jmap -heap <span class="variable">$1</span> &gt;<span class="variable">$dirname</span><span class="string">'/heap.log'</span></div><div class="line">su - tomcat -c <span class="string">"jmap -dump:live,format=b,file=<span class="variable">$&#123;dirname&#125;</span>/heap.bin <span class="variable">$1</span>"</span></div></pre></td></tr></table></figure>
+<ul>
+<li><p><a href="http://seanhe.iteye.com/blog/898277" target="_blank" rel="external">MAT分析</a></p>
+</li>
+<li><p>快速找到占用对象</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">jmap -histo pid | sort -n -r -k 2 &gt;</div></pre></td></tr></table></figure>
+</li>
+<li><p><a href="http://nolinux.blog.51cto.com/4824967/1588716
+http://blog.csdn.net/feihong247/article/details/7874063" target="_blank" rel="external">Java Bin 常用命令</a></p>
+</li>
+<li><a href="http://blog.csdn.net/ithomer/article/details/6252552" target="_blank" rel="external">JVM 内存模型</a></li>
+</ul>
+
+  </article>
+  <div class="random-toc-area">
+  <button class="btn-hide-toc btn-hide-toc-show" style="display: none" onclick="TOCToggle()">Show TOC</button>
+  <button class="btn-hide-toc btn-hide-toc-hide" onclick="TOCToggle()">Hide TOC</button>
+  <div class="random-toc">
+    <h2>Table of Content</h2>
+    <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#查看-Jvm-当前状态"><span class="toc-text">查看 Jvm  当前状态</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#脚本"><span class="toc-text">脚本</span></a></li></ol>
+  </div>
+</div>
+
+  
+<nav id="pagination">
+  
+    <a href="/2016/04/05/out-of-memory/" class="prev">&larr; Prev post OutOfMemory 怎么办</a>
+  
+
+  
+
+  
+    <a href="/2016/03/07/daily-soft/" class="next">Next post Windows 效率软件 &rarr;</a>
+  
+</nav>
+
+  <!-- JiaThis Button BEGIN -->
+
+<!-- JiaThis Button END -->
+
+
+      
+      
+    </div>
+  </div>
+
+  <div id="bottom-outer">
+    <div id="bottom-inner">
+      Site by luohuaruxue using
+      <a href="http://hexo.io">Hexo</a> & <a href="https://github.com/stiekel/hexo-theme-random">Random</a>
+      <br>
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+
+<div id="user-card">
+  <div class="center-field">
+    <img class="avatar" src="http://tva4.sinaimg.cn/crop.0.0.180.180.180/7317a86ajw1e8qgp5bmzyj2050050aa8.jpg">
+    <p id="description"></p>
+    <ul class="social-icon">
+  
+  
+    <li>
+      <a href="https://github.com/luohuaruxue">
+        
+          <i class="icon iconfont github">&#xe606;</i>
+        
+      </a>
+    </li>
+  
+    <li>
+      <a href="https://coding.net/u/stop">
+        
+          <i class="icon iconfont coding">&#xe607;</i>
+        
+      </a>
+    </li>
+  
+    <li>
+      <a href="https://weibo.com/luohuaruxue">
+        
+          <i class="icon iconfont weibo">&#xe602;</i>
+        
+      </a>
+    </li>
+  
+    <li>
+      <a href="https://www.douban.com/luohuaruxue">
+        
+          <i class="icon iconfont douban">&#xe60f;</i>
+        
+      </a>
+    </li>
+  
+</ul>
+  </div>
+</div>
+
+
+<div id="btn-view">Hide</div>
+
+<script>
+// is trigger analytics / tongji script
+var isIgnoreHost = false;
+
+if(window && window.location && window.location.host) {
+  isIgnoreHost = ["localhost","127.0.0.1"].some(function(address){
+    return 0 === window.location.host.indexOf(address);
+  });
+}
+
+var isTriggerAnalytics = !( true && isIgnoreHost );
+
+</script>
+
+
+
+
+  
+  
+    <script src="/js/jquery-2.2.3.min.js"></script>
+  
+    <script src="/js/vegas.min.js"></script>
+  
+    <script src="/js/random.js"></script>
+  
+    <script src="/js/highlight.pack.js"></script>
+  
+    <script src="/js/jquery.mousewheel.pack.js"></script>
+  
+    <script src="/js/jquery.fancybox.pack.js"></script>
+  
+    <script src="/js/jquery.fancybox-thumbs.js"></script>
+  
+    <script src="/js/plyr.js"></script>
+  
+
+<script>
+
+  // fancybox
+  var backgroundImages = [];
+  
+  $('#post').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox') || $(this).parent().hasClass('fancybox-thumb')) return;
+      var alt = this.alt || this.title;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'post' + i);
+    });
+  });
+  $(".fancybox").fancybox();
+
+var vegasConfig = {"preload­Image":true,"transition":["slideLeft2","slideRight2","flash2"],"timer":true,"delay":5000,"shuffle":true,"count":28};
+var unsplashConfig = {"gravity":"south"};
+// is show background images
+var turnoffBackgroundImage = false;
+
+
+
+  turnoffBackgroundImage = true;
+
+
+var backgroundColor = "34495E";
+
+$(".fancybox-thumb").fancybox({
+  prevEffect: 'none',
+  nextEffect: 'none',
+  helpers: {
+    title: {
+      type: 'outside'
+    },
+    thumbs: {
+      width: 50,
+      height: 50
+    }
+  }
+});
+
+// show video with plyr
+$(".video-container iframe").each(function(i){
+  var url = $(this).attr('src');
+  var id = url.split('/').pop();
+  var plyrContainer = document.createElement('div');
+  plyrContainer.className = 'plyr';
+  var plyrElement = document.createElement('div');
+  plyrElement.dataset.videoId = id;
+  switch(true) {
+    case url.search('youtube.com') >= 0:
+      plyrElement.dataset.type = 'youtube';
+      break;
+    case url.search('vimeo.com') >= 0:
+      plyrElement.dataset.type = 'vimeo';
+      break;
+    default:
+      return;
+  };
+  plyrContainer.appendChild(plyrElement);
+  $(this).parent().html(plyrContainer);
+});
+plyr.setup('.plyr', {iconUrl: '/css/sprite.svg'});
+</script>
+</body>
+</html>
+
