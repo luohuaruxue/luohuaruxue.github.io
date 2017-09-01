@@ -11,10 +11,9 @@ date: 2016-04-05 20:42:48
 
 1.  由于内存泄露没有响应，已经无法强制导出内存，那么只能从日志和机器的监控图入手
 
-<!--more-->
 
 2. 从监控的机器数据图中可以看到，在内存泄露时，机器 CPU 已经跑高至 700+% 
-	![top ](http://ww4.sinaimg.cn/large/7317a86agw1f2m47gr0irj20tv0f9n42.jpg)
+    [top](http://ww4.sinaimg.cn/large/7317a86agw1f2m47gr0irj20tv0f9n42.jpg)
 
 3. 日志方面，使用
 ```
