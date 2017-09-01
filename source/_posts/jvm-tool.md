@@ -1,4 +1,4 @@
-title: JVM 工具
+title: JVM 命令脚本
 date: 2016-04-04 20:53:30
 
 ---

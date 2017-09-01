@@ -1,5 +1,5 @@
 ---
-title: 解决linux磁盘无剩余空间的步骤
+title: Linux 磁盘无剩余空间怎么办
 date: 2015-11-03 08:50:40
 published: true
 ---

@@ -1,4 +1,4 @@
-title: mysql 死锁分析
+title: MySQL 死锁怎么办
 date: 2016-02-27 21:51:02
 
 ---
